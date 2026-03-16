@@ -1,0 +1,22 @@
+{
+  "name": "iluminar-import-management",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sistema de Gestao de Importacao - ILUMINAR",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:api": "npm test --workspace=packages/api",
+    "lint": "turbo run lint",
+    "db:migrate": "npm run db:migrate --workspace=packages/api",
+    "db:push": "npm run db:push --workspace=packages/api"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  }
+}

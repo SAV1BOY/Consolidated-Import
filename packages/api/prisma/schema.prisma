@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Supplier {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  name      String
+  items     Item[]
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("suppliers")
+}
+
+model Item {
+  id          Int      @id @default(autoincrement())
+  code        Int      @unique
+  description String
+  supplierId  Int      @map("supplier_id")
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  costFobUsd  Float    @map("cost_fob_usd")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  lineItems   ConsolidationLineItem[]
+
+  @@map("items")
+}
+
+model Consolidation {
+  id            Int      @id @default(autoincrement())
+  meetingNumber Int      @map("meeting_number")
+  totalMeetings Int      @default(26) @map("total_meetings")
+  meetingDate   DateTime @map("meeting_date")
+  description   String?
+  exchangeRate  Float    @map("exchange_rate")
+  status        String   @default("draft")
+  columnMapping Json?    @map("column_mapping")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  lineItems     ConsolidationLineItem[]
+  auditLogs     AuditLog[]
+
+  @@map("consolidations")
+}
+
+model ConsolidationLineItem {
+  id                Int           @id @default(autoincrement())
+  consolidationId   Int           @map("consolidation_id")
+  consolidation     Consolidation @relation(fields: [consolidationId], references: [id])
+  itemId            Int           @map("item_id")
+  item              Item          @relation(fields: [itemId], references: [id])
+  stockPhysical     Float         @map("stock_physical")
+  stockAvailable    Float         @map("stock_available")
+  monthlyAvg        Float         @map("monthly_avg")
+  stockDuration     Float         @map("stock_duration")
+  suggestedQty      Float         @map("suggested_qty")
+  decidedQty        Float?        @map("decided_qty")
+  totalFobUsd       Float         @map("total_fob_usd")
+  totalFobBrl       Float         @map("total_fob_brl")
+  totalNationalized Float         @map("total_nationalized")
+  abcClass          String?       @map("abc_class")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  @@unique([consolidationId, itemId])
+  @@map("consolidation_line_items")
+}
+
+model AuditLog {
+  id              Int            @id @default(autoincrement())
+  consolidationId Int?           @map("consolidation_id")
+  consolidation   Consolidation? @relation(fields: [consolidationId], references: [id])
+  action          String
+  entityType      String         @map("entity_type")
+  entityId        Int            @map("entity_id")
+  oldValue        Json?          @map("old_value")
+  newValue        Json?          @map("new_value")
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
+
+model ColumnMapping {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  mapping   Json
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("column_mappings")
+}
