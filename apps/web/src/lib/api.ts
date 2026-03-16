@@ -109,6 +109,32 @@ export async function importSpreadsheet(
   return res.json();
 }
 
+// Export
+async function downloadBlob(url: string, filename: string): Promise<void> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Export failed: ${res.status}`);
+  const blob = await res.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+export function downloadExcel(consolidationId: number): Promise<void> {
+  return downloadBlob(
+    `/api/consolidations/${consolidationId}/export/excel`,
+    `consolidacao-${consolidationId}.xlsx`,
+  );
+}
+
+export function downloadPDF(consolidationId: number): Promise<void> {
+  return downloadBlob(
+    `/api/consolidations/${consolidationId}/export/pdf`,
+    `consolidacao-${consolidationId}.pdf`,
+  );
+}
+
 // Compare
 export function compareConsolidations(id: number, otherId: number): Promise<CompareResult> {
   return fetchJSON(`/api/consolidations/${id}/compare/${otherId}`);

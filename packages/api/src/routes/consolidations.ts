@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
 import { logAction } from '../services/audit.js';
+import { generateExcel } from '../services/excel-exporter.js';
+import { generatePDF } from '../services/pdf-exporter.js';
 
 const router = Router();
 
@@ -138,6 +140,42 @@ router.get('/:id/compare/:otherId', async (req, res) => {
   });
 
   res.json({ added, removed, changed });
+});
+
+// GET /api/consolidations/:id/export/excel
+router.get('/:id/export/excel', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const buffer = await generateExcel(id);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="consolidacao-${id}.xlsx"`);
+    res.send(buffer);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Export failed';
+    if (message === 'Consolidation not found') {
+      res.status(404).json({ error: message });
+    } else {
+      res.status(500).json({ error: message });
+    }
+  }
+});
+
+// GET /api/consolidations/:id/export/pdf
+router.get('/:id/export/pdf', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const buffer = await generatePDF(id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="consolidacao-${id}.pdf"`);
+    res.send(buffer);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Export failed';
+    if (message === 'Consolidation not found') {
+      res.status(404).json({ error: message });
+    } else {
+      res.status(500).json({ error: message });
+    }
+  }
 });
 
 export default router;

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { getConsolidation, getDashboardKPIs, getParetoData, getRiskItems, getAuditLog } from '@/lib/api';
+import { getConsolidation, getDashboardKPIs, getParetoData, getRiskItems, getAuditLog, downloadExcel, downloadPDF } from '@/lib/api';
 import { formatDate, formatNumber } from '@/lib/format';
 import KPICards from '@/components/KPICards';
 import LineItemsTable from '@/components/LineItemsTable';
@@ -37,6 +37,7 @@ export default function ConsolidationDetailPage() {
   const [auditData, setAuditData] = useState<AuditLogEntry[] | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('itens');
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState<'excel' | 'pdf' | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -94,6 +95,26 @@ export default function ConsolidationDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              setExporting('excel');
+              try { await downloadExcel(id); } catch { /* toast */ } finally { setExporting(null); }
+            }}
+            disabled={exporting === 'excel'}
+            className="px-4 py-2 border border-gray-700 rounded hover:bg-gray-800 text-sm disabled:opacity-50"
+          >
+            {exporting === 'excel' ? 'Exportando...' : 'Excel'}
+          </button>
+          <button
+            onClick={async () => {
+              setExporting('pdf');
+              try { await downloadPDF(id); } catch { /* toast */ } finally { setExporting(null); }
+            }}
+            disabled={exporting === 'pdf'}
+            className="px-4 py-2 border border-gray-700 rounded hover:bg-gray-800 text-sm disabled:opacity-50"
+          >
+            {exporting === 'pdf' ? 'Exportando...' : 'PDF'}
+          </button>
           <Link
             href={`/upload/${id}`}
             className="px-4 py-2 bg-brand-green text-gray-950 font-semibold rounded hover:opacity-90 text-sm"
