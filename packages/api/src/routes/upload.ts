@@ -2,10 +2,10 @@ import express, { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { prisma } from '../db.js';
 import { getPreview, detectColumns } from '../services/column-mapper.js';
 import { parseSpreadsheet } from '../services/spreadsheet-parser.js';
 import { mergeItems } from '../services/merge-engine.js';
-import { store } from '../store.js';
 import { logAction } from '../services/audit.js';
 import type { ColumnMappingConfig } from '../types.js';
 
@@ -23,7 +23,6 @@ const uploadMiddleware = multer({
 
 const router = Router();
 
-// Multer error handler wrapper
 function handleUpload(fieldName: string) {
   return (req: express.Request, res: express.Response, next: express.NextFunction) => {
     uploadMiddleware.single(fieldName)(req, res, (err) => {
@@ -36,7 +35,7 @@ function handleUpload(fieldName: string) {
   };
 }
 
-// POST /api/upload/preview — Upload XLSX and return preview
+// POST /api/upload/preview
 router.post('/preview', handleUpload('file'), async (req, res) => {
   try {
     if (!req.file) {
@@ -59,11 +58,14 @@ router.post('/preview', handleUpload('file'), async (req, res) => {
   }
 });
 
-// POST /api/upload/consolidations/:id/import — Parse and import XLSX
+// POST /api/upload/consolidations/:id/import
 router.post('/consolidations/:id/import', handleUpload('file'), async (req, res) => {
   try {
     const consolidationId = parseInt(req.params.id, 10);
-    const consolidation = store.consolidations.find(c => c.id === consolidationId);
+    const consolidation = await prisma.consolidation.findUnique({
+      where: { id: consolidationId },
+    });
+
     if (!consolidation) {
       res.status(404).json({ error: 'Consolidation not found' });
       return;
@@ -83,24 +85,70 @@ router.post('/consolidations/:id/import', handleUpload('file'), async (req, res)
     const mapping: ColumnMappingConfig = JSON.parse(mappingStr);
     const filePath = req.file.path;
 
-    // skipExtensionCheck because multer already validated the file extension
     const parsedRows = await parseSpreadsheet(filePath, mapping, { skipExtensionCheck: true });
 
-    const existingCodes = store.items.map(i => i.code);
-    const existingSuppliers = store.suppliers.map(s => s.name);
+    // Get existing data for merge comparison
+    const existingItems = await prisma.item.findMany({ select: { code: true } });
+    const existingSuppliers = await prisma.supplier.findMany({ select: { name: true } });
 
-    const result = mergeItems(parsedRows, existingCodes, existingSuppliers);
+    const existingCodes = existingItems.map(i => i.code);
+    const existingSupplierNames = existingSuppliers.map(s => s.name);
 
-    // Create line items in store
-    for (const row of [...result.newItemRows, ...result.updatedItemRows]) {
-      store.addLineItem(consolidationId, row);
-    }
+    const result = mergeItems(parsedRows, existingCodes, existingSupplierNames);
 
-    // Save mapping to consolidation
-    consolidation.columnMapping = mapping as unknown as Record<string, string>;
+    // Persist to database in a transaction
+    await prisma.$transaction(async (tx) => {
+      const allRows = [...result.newItemRows, ...result.updatedItemRows];
+
+      for (const row of allRows) {
+        // Upsert supplier
+        const supplier = await tx.supplier.upsert({
+          where: { code: row.supplier.replace(/\s+/g, '_').toUpperCase().slice(0, 50) },
+          create: {
+            code: row.supplier.replace(/\s+/g, '_').toUpperCase().slice(0, 50),
+            name: row.supplier,
+          },
+          update: {},
+        });
+
+        // Upsert item
+        const item = await tx.item.upsert({
+          where: { code: row.code },
+          create: {
+            code: row.code,
+            description: row.description,
+            supplierId: supplier.id,
+            costFobUsd: row.costFobUsd,
+          },
+          update: { costFobUsd: row.costFobUsd },
+        });
+
+        // Create line item
+        await tx.consolidationLineItem.create({
+          data: {
+            consolidationId,
+            itemId: item.id,
+            stockPhysical: row.stockPhysical,
+            stockAvailable: row.stockAvailable,
+            monthlyAvg: row.monthlyAvg,
+            stockDuration: row.stockDuration,
+            suggestedQty: row.suggestedQty,
+            totalFobUsd: row.totalFobUsd,
+            totalFobBrl: row.totalFobBrl,
+            totalNationalized: row.totalNationalized,
+          },
+        });
+      }
+
+      // Save mapping to consolidation
+      await tx.consolidation.update({
+        where: { id: consolidationId },
+        data: { columnMapping: mapping as any },
+      });
+    });
 
     // Audit log
-    logAction(consolidationId, 'spreadsheet_uploaded', 'consolidation', consolidationId, null, {
+    await logAction(consolidationId, 'spreadsheet_uploaded', 'consolidation', consolidationId, null, {
       filename: req.file.originalname,
       rowsParsed: parsedRows.length,
       newItems: result.report.newItems,

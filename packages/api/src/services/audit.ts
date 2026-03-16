@@ -1,48 +1,32 @@
-export interface AuditEntry {
-  id: number;
-  consolidationId: number | null;
-  action: string;
-  entityType: string;
-  entityId: number;
-  oldValue: unknown;
-  newValue: unknown;
-  createdAt: Date;
-}
+import { prisma } from '../db.js';
 
-// In-memory audit log for testing; will be replaced with Prisma in production
-const auditLog: AuditEntry[] = [];
-let nextId = 1;
-
-export function logAction(
+export async function logAction(
   consolidationId: number | null,
   action: string,
   entityType: string,
   entityId: number,
   oldValue?: unknown,
   newValue?: unknown,
-): AuditEntry {
-  const entry: AuditEntry = {
-    id: nextId++,
-    consolidationId,
-    action,
-    entityType,
-    entityId,
-    oldValue: oldValue ?? null,
-    newValue: newValue ?? null,
-    createdAt: new Date(),
-  };
-  auditLog.push(entry);
-  return entry;
+) {
+  return prisma.auditLog.create({
+    data: {
+      consolidationId,
+      action,
+      entityType,
+      entityId,
+      oldValue: oldValue !== undefined ? (oldValue as any) : undefined,
+      newValue: newValue !== undefined ? (newValue as any) : undefined,
+    },
+  });
 }
 
-export function getAuditLog(consolidationId?: number): AuditEntry[] {
-  if (consolidationId !== undefined) {
-    return auditLog.filter(e => e.consolidationId === consolidationId);
-  }
-  return [...auditLog];
+export async function getAuditLog(consolidationId?: number) {
+  return prisma.auditLog.findMany({
+    where: consolidationId !== undefined ? { consolidationId } : {},
+    orderBy: { createdAt: 'desc' },
+  });
 }
 
-export function clearAuditLog(): void {
-  auditLog.length = 0;
-  nextId = 1;
+export async function clearAuditLog() {
+  await prisma.auditLog.deleteMany({});
 }

@@ -22,11 +22,12 @@ app.use('/api/dashboard', dashboardRouter);
 app.use('/api/items', itemsRouter);
 app.use('/api/suppliers', suppliersRouter);
 
-app.get('/api/audit-log', (req, res) => {
+app.get('/api/audit-log', async (req, res) => {
   const consolidationId = req.query.consolidationId
     ? parseInt(req.query.consolidationId as string, 10)
     : undefined;
-  res.json(getAuditLog(consolidationId));
+  const logs = await getAuditLog(consolidationId);
+  res.json(logs);
 });
 
 const PORT = process.env.PORT || 3001;

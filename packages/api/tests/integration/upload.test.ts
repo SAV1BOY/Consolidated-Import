@@ -1,17 +1,28 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 import path from 'path';
 import { app } from '../../src/index';
-import { store } from '../../src/store';
-import { clearAuditLog } from '../../src/services/audit';
+import { prisma } from '../../src/db';
 
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/sample-consolidado.xlsx');
 const INVALID_PATH = path.join(__dirname, '../fixtures/invalid.txt');
 
+async function cleanDatabase() {
+  await prisma.auditLog.deleteMany({});
+  await prisma.consolidationLineItem.deleteMany({});
+  await prisma.consolidation.deleteMany({});
+  await prisma.item.deleteMany({});
+  await prisma.supplier.deleteMany({});
+}
+
 describe('Upload Integration', () => {
-  beforeEach(() => {
-    store.clear();
-    clearAuditLog();
+  beforeEach(async () => {
+    await cleanDatabase();
+  });
+
+  afterAll(async () => {
+    await cleanDatabase();
+    await prisma.$disconnect();
   });
 
   describe('POST /api/upload/preview', () => {
@@ -47,7 +58,6 @@ describe('Upload Integration', () => {
 
   describe('POST /api/upload/consolidations/:id/import', () => {
     it('should parse XLSX with provided column mapping and create line items', async () => {
-      // Create consolidation first
       const createRes = await request(app)
         .post('/api/consolidations')
         .send({
@@ -77,7 +87,6 @@ describe('Upload Integration', () => {
     });
 
     it('should auto-detect and create new items', async () => {
-      // Create consolidation and import
       const createRes = await request(app)
         .post('/api/consolidations')
         .send({ meetingNumber: 1, meetingDate: '2026-03-01', exchangeRate: 5.3232 })
@@ -126,7 +135,6 @@ describe('Upload Integration', () => {
 
   describe('PATCH /api/consolidations/:id/items/:itemId', () => {
     it('should update decided quantity and create audit log', async () => {
-      // Setup: create consolidation and add an item
       const createRes = await request(app)
         .post('/api/consolidations')
         .send({ meetingNumber: 1, meetingDate: '2026-03-01', exchangeRate: 5.3232 })
@@ -143,7 +151,6 @@ describe('Upload Integration', () => {
         .field('mapping', mapping)
         .expect(200);
 
-      // Get first item
       const detail = await request(app)
         .get(`/api/consolidations/${createRes.body.id}`)
         .expect(200);
@@ -168,7 +175,6 @@ describe('Upload Integration', () => {
 
   describe('GET /api/dashboard/:consolidationId', () => {
     it('should return aggregated KPIs for a consolidation', async () => {
-      // Setup
       const createRes = await request(app)
         .post('/api/consolidations')
         .send({ meetingNumber: 1, meetingDate: '2026-03-01', exchangeRate: 5.3232 })
@@ -197,7 +203,6 @@ describe('Upload Integration', () => {
 
   describe('GET /api/consolidations/:id/compare/:otherId', () => {
     it('should return diff between two consolidations', async () => {
-      // Create two consolidations
       const c1 = await request(app)
         .post('/api/consolidations')
         .send({ meetingNumber: 1, meetingDate: '2026-03-01', exchangeRate: 5.3232 })
