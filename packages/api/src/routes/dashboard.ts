@@ -1,32 +1,9 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
 import { calculateKPIs, calculateABC, identifyRiskItems } from '../services/metrics-calculator.js';
-import type { LineItemInput } from '../services/metrics-calculator.js';
+import { getLineItemInputs } from '../services/line-item-loader.js';
 
 const router = Router();
-
-async function getLineItemInputs(consolidationId: number): Promise<LineItemInput[]> {
-  const lineItems = await prisma.consolidationLineItem.findMany({
-    where: { consolidationId },
-    include: { item: { include: { supplier: true } } },
-  });
-
-  return lineItems.map(li => ({
-    itemId: li.itemId,
-    code: li.item.code,
-    description: li.item.description,
-    supplier: li.item.supplier.name,
-    quantity: li.decidedQty ?? li.suggestedQty,
-    nationalizedValue: li.totalNationalized,
-    costFobUsd: li.item.costFobUsd,
-    totalFobUsd: li.totalFobUsd,
-    totalFobBrl: li.totalFobBrl,
-    stockAvailable: li.stockAvailable,
-    monthlyAvg: li.monthlyAvg,
-    stockDuration: li.stockDuration,
-    suggestedQty: li.suggestedQty,
-  }));
-}
 
 // GET /api/dashboard/:consolidationId
 router.get('/:consolidationId', async (req, res) => {
