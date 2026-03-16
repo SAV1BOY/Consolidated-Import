@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { mergeItems } from '../../src/services/merge-engine';
+import type { ParsedRow } from '../../src/types';
 
-// Service to be implemented in src/services/merge-engine.ts
-// import { mergeItems, MergeContext } from '../../src/services/merge-engine';
-
-import type { ParsedRow, MergeReport } from '../../src/types';
-
-// Sample parsed data for testing
 const sampleRows: ParsedRow[] = [
   {
     code: 240570,
@@ -22,7 +18,7 @@ const sampleRows: ParsedRow[] = [
     totalNationalized: 0,
   },
   {
-    code: 999999, // New item code
+    code: 999999,
     description: 'NOVO ITEM DE TESTE',
     supplier: 'NOVO FORNECEDOR',
     costFobUsd: 10.0,
@@ -52,76 +48,65 @@ const sampleRows: ParsedRow[] = [
 ];
 
 describe('MergeEngine', () => {
-  describe('mergeItems(consolidationId, parsedRows, existingItems)', () => {
+  describe('mergeItems(parsedRows, existingCodes, existingSuppliers)', () => {
     it('should detect new items (code not in database)', () => {
-      const existingCodes = [240570, 146874]; // 999999 is new
-
-      // const report = await mergeItems(1, sampleRows, existingCodes);
-      // expect(report.newItems).toBe(1);
-      // expect(report.updatedItems).toBe(2);
-      expect(true).toBe(false); // RED
+      const existingCodes = [240570, 146874];
+      const result = mergeItems(sampleRows, existingCodes);
+      expect(result.report.newItems).toBe(1);
+      expect(result.report.updatedItems).toBe(2);
     });
 
     it('should create supplier record if supplier does not exist', () => {
       const existingSuppliers = ['BO GLASS INDUSTRIAL LIMITED', 'HUA FENG'];
-      // 'NOVO FORNECEDOR' should be created
-
-      // const report = await mergeItems(1, sampleRows, [], existingSuppliers);
-      // expect(report.newSuppliers).toBe(1);
-      expect(true).toBe(false); // RED
+      const result = mergeItems(sampleRows, [], existingSuppliers);
+      expect(result.report.newSuppliers).toBe(1);
+      expect(result.newSupplierNames).toContain('NOVO FORNECEDOR');
     });
 
     it('should merge existing items with updated data', () => {
-      // Item 240570 exists but its data should be updated in the line item
       const existingCodes = [240570, 146874];
-
-      // const report = await mergeItems(1, sampleRows, existingCodes);
-      // expect(report.updatedItems).toBe(2);
-      expect(true).toBe(false); // RED
+      const result = mergeItems(sampleRows, existingCodes);
+      expect(result.report.updatedItems).toBe(2);
+      expect(result.updatedItemRows.length).toBe(2);
     });
 
     it('should return a complete merge report', () => {
-      // const report = await mergeItems(1, sampleRows, [240570]);
-      // expect(report).toHaveProperty('newItems');
-      // expect(report).toHaveProperty('updatedItems');
-      // expect(report).toHaveProperty('newSuppliers');
-      // expect(report).toHaveProperty('errors');
-      // expect(report).toHaveProperty('lineItemsCreated');
-      // expect(report.lineItemsCreated).toBe(3);
-      expect(true).toBe(false); // RED
+      const result = mergeItems(sampleRows, [240570]);
+      expect(result.report).toHaveProperty('newItems');
+      expect(result.report).toHaveProperty('updatedItems');
+      expect(result.report).toHaveProperty('newSuppliers');
+      expect(result.report).toHaveProperty('errors');
+      expect(result.report).toHaveProperty('lineItemsCreated');
+      expect(result.report.lineItemsCreated).toBe(3);
     });
 
     it('should handle duplicate codes in the same spreadsheet', () => {
       const duplicateRows: ParsedRow[] = [
         { ...sampleRows[0] },
-        { ...sampleRows[0] }, // same code 240570
+        { ...sampleRows[0] },
       ];
 
-      // const report = await mergeItems(1, duplicateRows, []);
-      // Should use the last occurrence or report an error
-      // expect(report.errors.length).toBeGreaterThan(0);
-      expect(true).toBe(false); // RED
+      const result = mergeItems(duplicateRows, []);
+      expect(result.report.errors.length).toBeGreaterThan(0);
     });
 
-    it('should create ConsolidationLineItems for all valid rows', () => {
-      // const report = await mergeItems(1, sampleRows, []);
-      // expect(report.lineItemsCreated).toBe(3);
-      // expect(report.errors).toHaveLength(0);
-      expect(true).toBe(false); // RED
+    it('should create line items for all valid rows', () => {
+      const result = mergeItems(sampleRows, []);
+      expect(result.report.lineItemsCreated).toBe(3);
+      expect(result.report.errors).toHaveLength(0);
     });
 
     it('should report errors for rows with invalid data', () => {
       const invalidRows: ParsedRow[] = [
         {
           ...sampleRows[0],
-          code: NaN, // invalid code
+          code: NaN,
         },
       ];
 
-      // const report = await mergeItems(1, invalidRows, []);
-      // expect(report.errors.length).toBeGreaterThan(0);
-      // expect(report.errors[0].field).toBe('code');
-      expect(true).toBe(false); // RED
+      const result = mergeItems(invalidRows, []);
+      expect(result.report.errors.length).toBeGreaterThan(0);
+      expect(result.report.errors[0].field).toBe('code');
     });
   });
 });

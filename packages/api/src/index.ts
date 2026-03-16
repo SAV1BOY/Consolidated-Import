@@ -1,5 +1,11 @@
 import express from 'express';
 import cors from 'cors';
+import consolidationsRouter from './routes/consolidations.js';
+import uploadRouter from './routes/upload.js';
+import dashboardRouter from './routes/dashboard.js';
+import itemsRouter from './routes/items.js';
+import suppliersRouter from './routes/suppliers.js';
+import { getAuditLog } from './services/audit.js';
 
 const app = express();
 
@@ -10,13 +16,18 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'iluminar-import-api' });
 });
 
-// Routes will be added in Sprint 1
-// app.use('/api/consolidations', consolidationsRouter);
-// app.use('/api/items', itemsRouter);
-// app.use('/api/suppliers', suppliersRouter);
-// app.use('/api/upload', uploadRouter);
-// app.use('/api/dashboard', dashboardRouter);
-// app.use('/api/audit-log', auditLogRouter);
+app.use('/api/consolidations', consolidationsRouter);
+app.use('/api/upload', uploadRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/items', itemsRouter);
+app.use('/api/suppliers', suppliersRouter);
+
+app.get('/api/audit-log', (req, res) => {
+  const consolidationId = req.query.consolidationId
+    ? parseInt(req.query.consolidationId as string, 10)
+    : undefined;
+  res.json(getAuditLog(consolidationId));
+});
 
 const PORT = process.env.PORT || 3001;
 

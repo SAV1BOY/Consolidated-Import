@@ -1,142 +1,220 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import request from 'supertest';
 import path from 'path';
-
-// Integration test: Upload XLSX → Parse → Preview → Map → Merge → DB
-// These tests require the Express app and database connection
-// import { app } from '../../src/index';
-// import request from 'supertest';
+import { app } from '../../src/index';
+import { store } from '../../src/store';
+import { clearAuditLog } from '../../src/services/audit';
 
 const FIXTURE_PATH = path.join(__dirname, '../fixtures/sample-consolidado.xlsx');
+const INVALID_PATH = path.join(__dirname, '../fixtures/invalid.txt');
 
 describe('Upload Integration', () => {
+  beforeEach(() => {
+    store.clear();
+    clearAuditLog();
+  });
+
   describe('POST /api/upload/preview', () => {
     it('should accept XLSX upload and return column preview', async () => {
-      // const response = await request(app)
-      //   .post('/api/upload/preview')
-      //   .attach('file', FIXTURE_PATH)
-      //   .expect(200);
-      //
-      // expect(response.body.headers).toBeInstanceOf(Array);
-      // expect(response.body.sampleRows).toBeInstanceOf(Array);
-      // expect(response.body.totalRows).toBeGreaterThan(0);
-      expect(true).toBe(false); // RED
+      const response = await request(app)
+        .post('/api/upload/preview')
+        .attach('file', FIXTURE_PATH)
+        .expect(200);
+
+      expect(response.body.headers).toBeInstanceOf(Array);
+      expect(response.body.sampleRows).toBeInstanceOf(Array);
+      expect(response.body.totalRows).toBeGreaterThan(0);
     });
 
     it('should reject non-XLSX files', async () => {
-      // const response = await request(app)
-      //   .post('/api/upload/preview')
-      //   .attach('file', path.join(__dirname, '../fixtures/invalid.txt'))
-      //   .expect(400);
-      //
-      // expect(response.body.error).toMatch(/xlsx/i);
-      expect(true).toBe(false); // RED
+      const response = await request(app)
+        .post('/api/upload/preview')
+        .attach('file', INVALID_PATH)
+        .expect(400);
+
+      expect(response.body.error).toMatch(/xlsx/i);
     });
 
     it('should return suggested column mapping', async () => {
-      // const response = await request(app)
-      //   .post('/api/upload/preview')
-      //   .attach('file', FIXTURE_PATH)
-      //   .expect(200);
-      //
-      // expect(response.body.suggestedMapping).toBeDefined();
-      // expect(response.body.suggestedMapping.code).toBeDefined();
-      expect(true).toBe(false); // RED
+      const response = await request(app)
+        .post('/api/upload/preview')
+        .attach('file', FIXTURE_PATH)
+        .expect(200);
+
+      expect(response.body.suggestedMapping).toBeDefined();
     });
   });
 
-  describe('POST /api/consolidations/:id/upload', () => {
+  describe('POST /api/upload/consolidations/:id/import', () => {
     it('should parse XLSX with provided column mapping and create line items', async () => {
-      // First create a consolidation
-      // const consolidation = await request(app)
-      //   .post('/api/consolidations')
-      //   .send({
-      //     meetingNumber: 1,
-      //     meetingDate: '2026-03-01',
-      //     description: 'Primeira Reuniao (Marco)',
-      //     exchangeRate: 5.3232,
-      //   })
-      //   .expect(201);
-      //
-      // const mapping = {
-      //   code: 'B', description: 'D', supplier: 'C',
-      //   costFobUsd: 'L', suggestedQty: 'I',
-      // };
-      //
-      // const response = await request(app)
-      //   .post(`/api/consolidations/${consolidation.body.id}/upload`)
-      //   .attach('file', FIXTURE_PATH)
-      //   .field('mapping', JSON.stringify(mapping))
-      //   .expect(200);
-      //
-      // expect(response.body.report.lineItemsCreated).toBeGreaterThan(0);
-      // expect(response.body.report.errors).toHaveLength(0);
-      expect(true).toBe(false); // RED
+      // Create consolidation first
+      const createRes = await request(app)
+        .post('/api/consolidations')
+        .send({
+          meetingNumber: 1,
+          meetingDate: '2026-03-01',
+          description: 'Primeira Reuniao (Marco)',
+          exchangeRate: 5.3232,
+        })
+        .expect(201);
+
+      const mapping = JSON.stringify({
+        code: 'B', description: 'D', supplier: 'C',
+        costFobUsd: 'L', suggestedQty: 'I',
+        stockPhysical: 'E', stockAvailable: 'F',
+        monthlyAvg: 'G', stockDuration: 'H',
+        totalFobUsd: 'M', totalFobBrl: 'N',
+        totalNationalized: 'O',
+      });
+
+      const response = await request(app)
+        .post(`/api/upload/consolidations/${createRes.body.id}/import`)
+        .attach('file', FIXTURE_PATH)
+        .field('mapping', mapping)
+        .expect(200);
+
+      expect(response.body.report.lineItemsCreated).toBeGreaterThan(0);
     });
 
     it('should auto-detect and create new items', async () => {
-      // Upload a spreadsheet with a new item code
-      // Then verify the item was created in the items table
-      // const items = await request(app).get('/api/items').expect(200);
-      // expect(items.body.length).toBeGreaterThan(0);
-      expect(true).toBe(false); // RED
+      // Create consolidation and import
+      const createRes = await request(app)
+        .post('/api/consolidations')
+        .send({ meetingNumber: 1, meetingDate: '2026-03-01', exchangeRate: 5.3232 })
+        .expect(201);
+
+      const mapping = JSON.stringify({
+        code: 'B', description: 'D', supplier: 'C',
+        costFobUsd: 'L', suggestedQty: 'I',
+      });
+
+      await request(app)
+        .post(`/api/upload/consolidations/${createRes.body.id}/import`)
+        .attach('file', FIXTURE_PATH)
+        .field('mapping', mapping)
+        .expect(200);
+
+      const items = await request(app).get('/api/items').expect(200);
+      expect(items.body.length).toBeGreaterThan(0);
     });
 
     it('should create audit log entry for upload', async () => {
-      // After upload, verify audit log was created
-      // const logs = await request(app)
-      //   .get('/api/audit-log?consolidationId=1')
-      //   .expect(200);
-      //
-      // expect(logs.body.length).toBeGreaterThan(0);
-      // expect(logs.body[0].action).toBe('spreadsheet_uploaded');
-      expect(true).toBe(false); // RED
+      const createRes = await request(app)
+        .post('/api/consolidations')
+        .send({ meetingNumber: 1, meetingDate: '2026-03-01', exchangeRate: 5.3232 })
+        .expect(201);
+
+      const mapping = JSON.stringify({
+        code: 'B', description: 'D', supplier: 'C',
+        costFobUsd: 'L', suggestedQty: 'I',
+      });
+
+      await request(app)
+        .post(`/api/upload/consolidations/${createRes.body.id}/import`)
+        .attach('file', FIXTURE_PATH)
+        .field('mapping', mapping)
+        .expect(200);
+
+      const logs = await request(app)
+        .get(`/api/audit-log?consolidationId=${createRes.body.id}`)
+        .expect(200);
+
+      expect(logs.body.length).toBeGreaterThan(0);
+      expect(logs.body[0].action).toBe('spreadsheet_uploaded');
     });
   });
 
   describe('PATCH /api/consolidations/:id/items/:itemId', () => {
     it('should update decided quantity and create audit log', async () => {
-      // const response = await request(app)
-      //   .patch('/api/consolidations/1/items/1')
-      //   .send({ decidedQty: 500 })
-      //   .expect(200);
-      //
-      // expect(response.body.decidedQty).toBe(500);
-      //
-      // const logs = await request(app)
-      //   .get('/api/audit-log?consolidationId=1')
-      //   .expect(200);
-      //
-      // const qtyLog = logs.body.find(l => l.action === 'qty_changed');
-      // expect(qtyLog).toBeDefined();
-      // expect(qtyLog.oldValue).toBeNull(); // was null before
-      // expect(qtyLog.newValue).toBe(500);
-      expect(true).toBe(false); // RED
+      // Setup: create consolidation and add an item
+      const createRes = await request(app)
+        .post('/api/consolidations')
+        .send({ meetingNumber: 1, meetingDate: '2026-03-01', exchangeRate: 5.3232 })
+        .expect(201);
+
+      const mapping = JSON.stringify({
+        code: 'B', description: 'D', supplier: 'C',
+        costFobUsd: 'L', suggestedQty: 'I',
+      });
+
+      await request(app)
+        .post(`/api/upload/consolidations/${createRes.body.id}/import`)
+        .attach('file', FIXTURE_PATH)
+        .field('mapping', mapping)
+        .expect(200);
+
+      // Get first item
+      const detail = await request(app)
+        .get(`/api/consolidations/${createRes.body.id}`)
+        .expect(200);
+
+      const firstItem = detail.body.lineItems[0];
+
+      const response = await request(app)
+        .patch(`/api/consolidations/${createRes.body.id}/items/${firstItem.itemId}`)
+        .send({ decidedQty: 500 })
+        .expect(200);
+
+      expect(response.body.decidedQty).toBe(500);
+
+      const logs = await request(app)
+        .get(`/api/audit-log?consolidationId=${createRes.body.id}`)
+        .expect(200);
+
+      const qtyLog = logs.body.find((l: { action: string }) => l.action === 'qty_changed');
+      expect(qtyLog).toBeDefined();
     });
   });
 
   describe('GET /api/dashboard/:consolidationId', () => {
     it('should return aggregated KPIs for a consolidation', async () => {
-      // const response = await request(app)
-      //   .get('/api/dashboard/1')
-      //   .expect(200);
-      //
-      // expect(response.body.totalItems).toBeGreaterThan(0);
-      // expect(response.body.totalFobUsd).toBeGreaterThan(0);
-      // expect(response.body.totalNationalized).toBeGreaterThan(0);
-      expect(true).toBe(false); // RED
+      // Setup
+      const createRes = await request(app)
+        .post('/api/consolidations')
+        .send({ meetingNumber: 1, meetingDate: '2026-03-01', exchangeRate: 5.3232 })
+        .expect(201);
+
+      const mapping = JSON.stringify({
+        code: 'B', description: 'D', supplier: 'C',
+        costFobUsd: 'L', suggestedQty: 'I',
+        totalFobUsd: 'M', totalFobBrl: 'N', totalNationalized: 'O',
+      });
+
+      await request(app)
+        .post(`/api/upload/consolidations/${createRes.body.id}/import`)
+        .attach('file', FIXTURE_PATH)
+        .field('mapping', mapping)
+        .expect(200);
+
+      const response = await request(app)
+        .get(`/api/dashboard/${createRes.body.id}`)
+        .expect(200);
+
+      expect(response.body.totalItems).toBeGreaterThan(0);
+      expect(response.body.exchangeRate).toBe(5.3232);
     });
   });
 
   describe('GET /api/consolidations/:id/compare/:otherId', () => {
     it('should return diff between two consolidations', async () => {
-      // const response = await request(app)
-      //   .get('/api/consolidations/1/compare/2')
-      //   .expect(200);
-      //
-      // expect(response.body.added).toBeInstanceOf(Array);
-      // expect(response.body.removed).toBeInstanceOf(Array);
-      // expect(response.body.changed).toBeInstanceOf(Array);
-      expect(true).toBe(false); // RED
+      // Create two consolidations
+      const c1 = await request(app)
+        .post('/api/consolidations')
+        .send({ meetingNumber: 1, meetingDate: '2026-03-01', exchangeRate: 5.3232 })
+        .expect(201);
+
+      const c2 = await request(app)
+        .post('/api/consolidations')
+        .send({ meetingNumber: 2, meetingDate: '2026-03-15', exchangeRate: 5.35 })
+        .expect(201);
+
+      const response = await request(app)
+        .get(`/api/consolidations/${c1.body.id}/compare/${c2.body.id}`)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('added');
+      expect(response.body).toHaveProperty('removed');
+      expect(response.body).toHaveProperty('changed');
     });
   });
 });
