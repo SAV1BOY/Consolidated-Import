@@ -14,12 +14,17 @@ import type { Consolidation, DashboardKPIs, ABCItem, RiskItem, AuditLogEntry } f
 
 type Tab = 'itens' | 'pareto' | 'riscos' | 'auditoria';
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'itens', label: 'Itens' },
-  { key: 'pareto', label: 'Pareto ABC' },
-  { key: 'riscos', label: 'Riscos' },
-  { key: 'auditoria', label: 'Auditoria' },
-];
+function getTabLabel(key: Tab, consolidation: Consolidation | null): string {
+  const count = consolidation?.lineItems?.length ?? 0;
+  switch (key) {
+    case 'itens': return count > 0 ? `Itens (${count})` : 'Itens';
+    case 'pareto': return 'Pareto ABC';
+    case 'riscos': return 'Riscos';
+    case 'auditoria': return 'Auditoria';
+  }
+}
+
+const TAB_KEYS: Tab[] = ['itens', 'pareto', 'riscos', 'auditoria'];
 
 export default function ConsolidationDetailPage() {
   const params = useParams();
@@ -109,17 +114,17 @@ export default function ConsolidationDetailPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-800 mb-4">
-        {TABS.map(tab => (
+        {TAB_KEYS.map(key => (
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-              activeTab === tab.key
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              activeTab === key
                 ? 'border-brand-green text-brand-green'
                 : 'border-transparent text-gray-400 hover:text-gray-200'
             }`}
           >
-            {tab.label}
+            {getTabLabel(key, consolidation)}
           </button>
         ))}
       </div>
@@ -131,7 +136,9 @@ export default function ConsolidationDetailPage() {
           consolidationId={id}
           onQuantityUpdate={() => {
             loadData();
-            setAuditData(null); // force reload audit on next view
+            setParetoData(null);
+            setRiskData(null);
+            setAuditData(null);
           }}
         />
       )}
