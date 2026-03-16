@@ -62,7 +62,7 @@ export async function parseSpreadsheet(
   const headerRow = worksheet.getRow(1);
   const maxCol = headerRow.cellCount;
   for (const field of requiredFields) {
-    const colIndex = columnLetterToIndex(mapping[field]);
+    const colIndex = columnLetterToIndex(mapping[field]!);
     if (colIndex > maxCol + 5) {
       throw new Error(`Required field '${field}' maps to column ${mapping[field]} which appears to be out of range`);
     }
