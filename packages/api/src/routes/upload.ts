@@ -61,7 +61,7 @@ router.post('/preview', handleUpload('file'), async (req, res) => {
 // POST /api/upload/consolidations/:id/import
 router.post('/consolidations/:id/import', handleUpload('file'), async (req, res) => {
   try {
-    const consolidationId = parseInt(req.params.id, 10);
+    const consolidationId = parseInt(req.params.id as string, 10);
     const consolidation = await prisma.consolidation.findUnique({
       where: { id: consolidationId },
     });
