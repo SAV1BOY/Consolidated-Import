@@ -1,0 +1,306 @@
+{
+  "resumo": {
+    "total_itens_base": 101,
+    "itens_com_compra": 14,
+    "total_fornecedores_base": 16,
+    "fornecedores_ativos": 8,
+    "quantidade_total_compra": 6715.0,
+    "valor_total_fob_usd": 13183.199999999999,
+    "valor_total_fob_brl": 70176.81023999999,
+    "valor_total_nacionalizado": 140353.62047999998,
+    "custo_medio_por_unidade_nacionalizada": 20.901507145197318,
+    "ticket_medio_por_fornecedor_ativo": 17544.202559999998,
+    "cambio_usd_brl_referencia": 5.3232
+  },
+  "insights": [
+    "Os 2 maiores fornecedores concentram 74.1% do valor nacionalizado.",
+    "O fornecedor com maior peso financeiro é HUA FENG. com R$ 55.893,60 e 39,8% do total,",
+    "O item mais representativo é iLed - S 2700, responsável por 39.8% do valor total da compra.",
+    "A base possui 101 itens, mas apenas 14 estão com compra sugerida.",
+    "O câmbio de referência identificado na planilha é US$ 1 = R$ 5.3232."
+  ],
+  "metricas_calculadas": [
+    {
+      "metrica": "Número total de itens",
+      "formula": "Contagem de linhas de item da base"
+    },
+    {
+      "metrica": "Itens com compra sugerida",
+      "formula": "Contagem de itens com Sugestão > 0"
+    },
+    {
+      "metrica": "Quantidade total a ser comprada",
+      "formula": "Soma da coluna Sugestão"
+    },
+    {
+      "metrica": "Valor total FOB (US$)",
+      "formula": "Soma da coluna TOTAL FOB (US$) para itens com Sugestão > 0"
+    },
+    {
+      "metrica": "Valor total FOB (R$)",
+      "formula": "Soma da coluna TOTAL FOB (R$) para itens com Sugestão > 0"
+    },
+    {
+      "metrica": "Valor total nacionalizado",
+      "formula": "Soma da coluna TOTAL NACIONALIZADO para itens com Sugestão > 0"
+    },
+    {
+      "metrica": "Número total de fornecedores",
+      "formula": "Contagem distinta da coluna Fornecedor"
+    },
+    {
+      "metrica": "Fornecedores ativos",
+      "formula": "Contagem distinta de fornecedores com Sugestão > 0"
+    },
+    {
+      "metrica": "Ticket médio por fornecedor",
+      "formula": "Valor total nacionalizado / fornecedores ativos"
+    },
+    {
+      "metrica": "Custo médio por unidade",
+      "formula": "Valor total nacionalizado / quantidade total a comprar"
+    },
+    {
+      "metrica": "Participação percentual por fornecedor (valor)",
+      "formula": "Valor do fornecedor / valor total nacionalizado"
+    },
+    {
+      "metrica": "Participação percentual por fornecedor (quantidade)",
+      "formula": "Quantidade do fornecedor / quantidade total a comprar"
+    },
+    {
+      "metrica": "Curva ABC",
+      "formula": "A até 80%, B até 95%, C acima de 95% do acumulado no valor"
+    }
+  ],
+  "fornecedores": [
+    {
+      "Fornecedor_clean": "HUA FENG",
+      "numero_itens": 1,
+      "quantidade": 600.0,
+      "valor_nacionalizado": 55893.6,
+      "pct": 39.82341161478246,
+      "cum_pct": 39.82341161478246,
+      "classe_abc": "A"
+    },
+    {
+      "Fornecedor_clean": "HI ZEALED",
+      "numero_itens": 3,
+      "quantidade": 2550.0,
+      "valor_nacionalizado": 48057.8496,
+      "pct": 34.240548576976764,
+      "cum_pct": 74.06396019175922,
+      "classe_abc": "A"
+    },
+    {
+      "Fornecedor_clean": "TUER",
+      "numero_itens": 3,
+      "quantidade": 1650.0,
+      "valor_nacionalizado": 14351.3472,
+      "pct": 10.225135020328905,
+      "cum_pct": 84.28909521208813,
+      "classe_abc": "B"
+    },
+    {
+      "Fornecedor_clean": "U-POLEMAG",
+      "numero_itens": 1,
+      "quantidade": 950.0,
+      "valor_nacionalizado": 9780.31536,
+      "pct": 6.968338491413315,
+      "cum_pct": 91.25743370350145,
+      "classe_abc": "B"
+    },
+    {
+      "Fornecedor_clean": "L POWER",
+      "numero_itens": 1,
+      "quantidade": 160.0,
+      "valor_nacionalizado": 6132.3264,
+      "pct": 4.369197160021846,
+      "cum_pct": 95.62663086352329,
+      "classe_abc": "C"
+    },
+    {
+      "Fornecedor_clean": "DARKOO",
+      "numero_itens": 3,
+      "quantidade": 720.0,
+      "valor_nacionalizado": 4120.156800000001,
+      "pct": 2.9355543418896786,
+      "cum_pct": 98.56218520541297,
+      "classe_abc": "C"
+    },
+    {
+      "Fornecedor_clean": "GREEN POWER",
+      "numero_itens": 1,
+      "quantidade": 75.0,
+      "valor_nacionalizado": 1956.276,
+      "pct": 1.3938194065173861,
+      "cum_pct": 99.95600461193035,
+      "classe_abc": "C"
+    },
+    {
+      "Fornecedor_clean": "Beecore",
+      "numero_itens": 1,
+      "quantidade": 10.0,
+      "valor_nacionalizado": 61.74912,
+      "pct": 0.04399538806966442,
+      "cum_pct": 100.00000000000001,
+      "classe_abc": "C"
+    }
+  ],
+  "itens": [
+    {
+      "Codigo_num": 146874.0,
+      "item": "iLed - S 2700",
+      "Fornecedor_clean": "HUA FENG",
+      "quantidade": 600.0,
+      "valor_nacionalizado": 55893.6,
+      "custo_unit_usd": 8.75,
+      "pct": 39.823411614782444,
+      "cum_pct": 39.823411614782444,
+      "classe_abc": "A"
+    },
+    {
+      "Codigo_num": 195514.0,
+      "item": "Driver iLed 500 3-9VDC 600mA",
+      "Fornecedor_clean": "HI ZEALED",
+      "quantidade": 1600.0,
+      "valor_nacionalizado": 23847.936,
+      "custo_unit_usd": 1.4,
+      "pct": 16.991322288973844,
+      "cum_pct": 56.81473390375629,
+      "classe_abc": "A"
+    },
+    {
+      "Codigo_num": 143850.0,
+      "item": "Driver Multipoint 6x iLed 200 16~20V 700mA",
+      "Fornecedor_clean": "HI ZEALED",
+      "quantidade": 800.0,
+      "valor_nacionalizado": 21974.1696,
+      "custo_unit_usd": 2.58,
+      "pct": 15.656289823411615,
+      "cum_pct": 72.4710237271679,
+      "classe_abc": "A"
+    },
+    {
+      "Codigo_num": 255344.0,
+      "item": "IMA DE NEODIMIO PERSONALIZADO EM \"H\" 5mm x 3,5mm x 45mm",
+      "Fornecedor_clean": "U-POLEMAG",
+      "quantidade": 950.0,
+      "valor_nacionalizado": 9780.31536,
+      "custo_unit_usd": 0.967,
+      "pct": 6.968338491413313,
+      "cum_pct": 79.43936221858121,
+      "classe_abc": "A"
+    },
+    {
+      "Codigo_num": 239132.0,
+      "item": "ARTICULAÇÃO DE LATÃO PARA SPOT PEN Ø1/2\" x 82mm (OXIDADA BRANCA)",
+      "Fornecedor_clean": "TUER",
+      "quantidade": 600.0,
+      "valor_nacionalizado": 6260.0832,
+      "custo_unit_usd": 0.98,
+      "pct": 4.460222100855634,
+      "cum_pct": 83.89958431943684,
+      "classe_abc": "B"
+    },
+    {
+      "Codigo_num": 231629.0,
+      "item": "DRIVER 24V 120W",
+      "Fornecedor_clean": "L POWER",
+      "quantidade": 160.0,
+      "valor_nacionalizado": 6132.3264,
+      "custo_unit_usd": 3.6,
+      "pct": 4.369197160021845,
+      "cum_pct": 88.26878147945868,
+      "classe_abc": "B"
+    },
+    {
+      "Codigo_num": 239135.0,
+      "item": "Articulacao Cromada para spot 13mm x 35mm ROSCAS M10 e M8 WHITE",
+      "Fornecedor_clean": "TUER",
+      "quantidade": 800.0,
+      "valor_nacionalizado": 5961.984,
+      "custo_unit_usd": 0.7,
+      "pct": 4.247830572243461,
+      "cum_pct": 92.51661205170214,
+      "classe_abc": "B"
+    },
+    {
+      "Codigo_num": 143840.0,
+      "item": "Driver iLed 200 3~6V 700mA",
+      "Fornecedor_clean": "HI ZEALED",
+      "quantidade": 150.0,
+      "valor_nacionalizado": 2235.744,
+      "custo_unit_usd": 1.4,
+      "pct": 1.592936464591298,
+      "cum_pct": 94.10954851629344,
+      "classe_abc": "B"
+    },
+    {
+      "Codigo_num": 246181.0,
+      "item": "MICROCANOPLA CÔNICA DE REGULAGEM COMPLETA (OXIDADA PRETA - TUER)",
+      "Fornecedor_clean": "TUER",
+      "quantidade": 250.0,
+      "valor_nacionalizado": 2129.28,
+      "custo_unit_usd": 0.8,
+      "pct": 1.5170823472298076,
+      "cum_pct": 95.62663086352325,
+      "classe_abc": "C"
+    },
+    {
+      "Codigo_num": 142189.0,
+      "item": "HOLDE 6 FOCOS + OPTICA 36° MULTIPOINT PRETO (DK151-ZJ-6H1-BK-36deg)",
+      "Fornecedor_clean": "DARKOO",
+      "quantidade": 220.0,
+      "valor_nacionalizado": 2107.9872,
+      "custo_unit_usd": 0.9,
+      "pct": 1.5019115237575094,
+      "cum_pct": 97.12854238728076,
+      "classe_abc": "C"
+    },
+    {
+      "Codigo_num": 266668.0,
+      "item": "Driver 24W 24V",
+      "Fornecedor_clean": "GREEN POWER",
+      "quantidade": 75.0,
+      "valor_nacionalizado": 1956.276,
+      "custo_unit_usd": 2.45,
+      "pct": 1.3938194065173857,
+      "cum_pct": 98.52236179379814,
+      "classe_abc": "C"
+    },
+    {
+      "Codigo_num": 161379.0,
+      "item": "HOLDE 6 FOCOS + OPTICA 36° MULTIPOINT BRANCO (DK151-ZJ-6H1-WT-36deg)",
+      "Fornecedor_clean": "DARKOO",
+      "quantidade": 100.0,
+      "valor_nacionalizado": 1330.8,
+      "custo_unit_usd": 1.25,
+      "pct": 0.9481764670186297,
+      "cum_pct": 99.47053826081677,
+      "classe_abc": "C"
+    },
+    {
+      "Codigo_num": 142186.0,
+      "item": "Optica 25 graus iLed 200 / iLed 100",
+      "Fornecedor_clean": "DARKOO",
+      "quantidade": 400.0,
+      "valor_nacionalizado": 681.3696,
+      "custo_unit_usd": 0.16,
+      "pct": 0.48546635111353836,
+      "cum_pct": 99.95600461193031,
+      "classe_abc": "C"
+    },
+    {
+      "Codigo_num": 140122.0,
+      "item": "Louver 35mm",
+      "Fornecedor_clean": "Beecore",
+      "quantidade": 10.0,
+      "valor_nacionalizado": 61.74912,
+      "custo_unit_usd": 0.58,
+      "pct": 0.043995388069664416,
+      "cum_pct": 99.99999999999997,
+      "classe_abc": "C"
+    }
+  ]
+}
